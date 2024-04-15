@@ -1,77 +1,40 @@
-import random
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-arr = [25, -4, 6, 6, 3, 7, 12, 8, 4, -87]
-def twoWaySort(arr, n):
-    # To store odd Numbers
-    odd = []
-    # To store Even Numbers
-    even = []
-    for i in range(n):
-        # If number is even push them to even vector
-        if arr[i] % 2 == 0:
-            even.append(arr[i])
-            # If number is odd push them to odd vector
-        else:
-            odd.append(arr[i])
-            # Sort even array in ascending order
-    even.sort()
-    # Sort odd array in descending order
-    odd.sort(reverse=True)
-    i = 0
-    # First store odd numbers to array
-    for j in range(len(odd)):
-        arr[i] = odd[j]
-        i += 1
-    # Then store even numbers to array
-    for j in range(len(even)):
-        arr[i] = even[j]
-        i += 1
+data_path = 'C:/Users/maxmo/PycharmProjects/biostats-2/data_biostats.csv'
+data = pd.read_csv(data_path)
+
+data = data.select_dtypes(include=[float, int])
 
 
-arr = [1, 3, 2, 7, 5, 4]
-n = len(arr)
-twoWaySort(arr, n)
-for i in range(n):
-    print(arr[i], end=" ")
-def yes(arr):
-    m = min(arr)
-    for i in range(len(arr)):
-        arr.remove(m)
-        arr.insert(0, m)
+X = data.iloc[:, :-1]  # Features
+y = data.iloc[:, -1]   # Target variable
 
-def bubbleSort(arr):
-    n = len(arr)
-    swapped = False
-    for i in range(n - 1):
-        for j in range(0, n - i - 1):
-            if arr[j] > arr[j + 1]:
-                swapped = True
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-        if not swapped:
-            return
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-def reverseBubbleSort(arr):
-    n = len(arr)
-    swapped = False
-    for i in range(n - 1):
-        for j in range(0, n - i - 1):
-            if arr[j] < arr[j + 1]:
-                swapped = True
-                arr[j], arr[j + 1] = arr[j + 1], arr[j]
-        if not swapped:
-            return
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-def choosePositive(len):
-    list = []
-    if len < 0:
-        len = int(input("Choose a + int"))
-    for i in range(len):
-        val = random.randint(-10, 100)
-        list.append(random.randint)
-        if val % 2 == 0:
-            bubbleSort(list)
-        else:
-            reverseBubbleSort(list)
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans.fit(X_train_scaled)
 
+X_train_with_cluster = pd.concat([pd.DataFrame(X_train_scaled), pd.Series(kmeans.labels_, name='cluster')], axis=1)
+X_test_with_cluster = pd.concat([pd.DataFrame(X_test_scaled), pd.Series(kmeans.predict(X_test_scaled), name='cluster')], axis=1)
 
-choosePositive(6)
+logreg = LogisticRegression(random_state=42)
+logreg.fit(X_train_with_cluster, y_train)
+
+y_pred = logreg.predict(X_test_with_cluster)
+
+accuracy = accuracy_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+class_report = classification_report(y_test, y_pred)
+
+print(f'Accuracy: {accuracy * 100:.2f}%')
+print("Confusion Matrix:\n", conf_matrix)
+print("Classification Report:\n", class_report)

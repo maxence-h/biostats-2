@@ -11,7 +11,7 @@ with open(r"simulation.csv", 'r') as f:
     data = pd.read_csv(f)
 
 # print(data.shape)
-tcga_inpu t =np.transpose(data)
+tcga_input =np.transpose(data)
 print(tcga_input.shape[1])
 length1 = tcga_input.shape[1]
 learning_rate = 0.0001
